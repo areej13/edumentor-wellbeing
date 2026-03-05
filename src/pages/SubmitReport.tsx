@@ -1,0 +1,264 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ArrowLeft, Mic, MicOff, Send, CheckCircle2, User, GraduationCap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import StepIndicator from "@/components/StepIndicator";
+import CategorySelector from "@/components/CategorySelector";
+import EmotionSelector from "@/components/EmotionSelector";
+
+const suggestions = [
+  "هل تواجه صعوبة في فهم الدروس؟",
+  "هل تشعر بالضغط بسبب الواجبات؟",
+  "هل تعرضت للتنمر؟",
+  "هل لديك مشكلة مع أحد في المدرسة؟",
+  "هل تحتاج إلى مساعدة أو دعم؟",
+];
+
+const educationLevels = [
+  { label: "ابتدائي", value: "primary" },
+  { label: "متوسط", value: "middle" },
+  { label: "ثانوي", value: "secondary" },
+];
+
+const pageVariants = {
+  initial: { opacity: 0, x: -30 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 30 },
+};
+
+const SubmitReport = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [role, setRole] = useState<string | null>(null);
+  const [level, setLevel] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const [emotion, setEmotion] = useState<string | null>(null);
+  const [reportText, setReportText] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const totalSteps = 5;
+
+  const canNext = () => {
+    switch (step) {
+      case 1: return !!role;
+      case 2: return !!level;
+      case 3: return !!category;
+      case 4: return !!emotion;
+      case 5: return reportText.trim().length > 0;
+      default: return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (step < totalSteps) setStep(step + 1);
+    else handleSubmit();
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+  };
+
+  const toggleRecording = () => {
+    if (!isRecording && "webkitSpeechRecognition" in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ar-SA";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setReportText((prev) => (prev ? prev + " " + transcript : transcript));
+      };
+      recognition.onend = () => setIsRecording(false);
+      recognition.start();
+      setIsRecording(true);
+    } else {
+      setIsRecording(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 pb-20 sm:pb-0">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.2 }}
+          >
+            <CheckCircle2 className="w-20 h-20 text-success mx-auto mb-6" />
+          </motion.div>
+          <h2 className="text-title-section font-bold text-primary mb-4">
+            تم استلام بلاغك بسرية تامة
+          </h2>
+          <p className="text-body text-muted-foreground mb-8">
+            شكراً لمساهمتك في تحسين البيئة التعليمية.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-8 py-3 rounded-lg bg-primary text-primary-foreground text-btn font-bold"
+          >
+            العودة للرئيسية
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center px-4 pt-6 pb-24 sm:pb-8">
+      <div className="w-full max-w-lg">
+        <StepIndicator currentStep={step} totalSteps={totalSteps} />
+
+        <AnimatePresence mode="wait">
+          {/* Step 1: Role */}
+          {step === 1 && (
+            <motion.div key="role" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
+              <h2 className="text-title-section font-bold text-center mb-2">من أنت؟</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">اختر نوع المستخدم</p>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: "طالب", value: "student", icon: GraduationCap },
+                  { label: "معلم", value: "teacher", icon: User },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setRole(item.value)}
+                      className={`flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-colors duration-200
+                        ${role === item.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-primary/30"}`}
+                    >
+                      <Icon className={`w-10 h-10 ${role === item.value ? "text-accent" : "text-primary"}`} />
+                      <span className="text-body font-bold">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Level */}
+          {step === 2 && (
+            <motion.div key="level" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
+              <h2 className="text-title-section font-bold text-center mb-2">المرحلة الدراسية</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">اختر المرحلة</p>
+              <div className="flex flex-col gap-3">
+                {educationLevels.map((l) => (
+                  <button
+                    key={l.value}
+                    onClick={() => setLevel(l.value)}
+                    className={`p-4 rounded-lg border-2 text-body font-medium text-center transition-colors duration-200
+                      ${level === l.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-primary/30"}`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Category */}
+          {step === 3 && (
+            <motion.div key="category" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
+              <h2 className="text-title-section font-bold text-center mb-2">نوع البلاغ</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">اختر التصنيف المناسب</p>
+              <CategorySelector selected={category} onSelect={setCategory} />
+            </motion.div>
+          )}
+
+          {/* Step 4: Emotion */}
+          {step === 4 && (
+            <motion.div key="emotion" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
+              <h2 className="text-title-section font-bold text-center mb-2">كيف تشعر؟</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">اختر المشاعر التي تعبر عنك</p>
+              <EmotionSelector selected={emotion} onSelect={setEmotion} />
+            </motion.div>
+          )}
+
+          {/* Step 5: Report Text */}
+          {step === 5 && (
+            <motion.div key="text" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
+              <h2 className="text-title-section font-bold text-center mb-2">وصف المشكلة</h2>
+              <p className="text-body text-muted-foreground text-center mb-4">اكتب أو تحدث عن مشكلتك</p>
+
+              {/* Suggestions */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setReportText((prev) => (prev ? prev + " " + s : s))}
+                    className="px-3 py-1.5 rounded-full bg-muted text-small text-muted-foreground hover:bg-accent/10 hover:text-accent transition-colors duration-200"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+
+              {/* Textarea */}
+              <div className="relative">
+                <textarea
+                  value={reportText}
+                  onChange={(e) => setReportText(e.target.value)}
+                  placeholder="اكتب هنا أو استخدم المايكروفون..."
+                  rows={5}
+                  className="w-full p-4 rounded-lg border-2 border-border bg-card text-body resize-none focus:outline-none focus:border-accent transition-colors duration-200"
+                />
+                <button
+                  onClick={toggleRecording}
+                  className={`absolute bottom-3 left-3 p-2.5 rounded-full transition-colors duration-200
+                    ${isRecording ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}
+                >
+                  {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between mt-8 gap-3">
+          {step > 1 ? (
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-border text-btn font-medium hover:bg-muted transition-colors duration-200"
+            >
+              <ArrowRight className="w-4 h-4" />
+              السابق
+            </button>
+          ) : (
+            <div />
+          )}
+          <button
+            onClick={handleNext}
+            disabled={!canNext()}
+            className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground text-btn font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-opacity duration-200"
+          >
+            {step === totalSteps ? (
+              <>
+                إرسال
+                <Send className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                التالي
+                <ArrowLeft className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SubmitReport;
