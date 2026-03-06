@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      knowledge_documents: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          source: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          source: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          source?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
