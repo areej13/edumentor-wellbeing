@@ -36,7 +36,11 @@ const CounselorLogin = () => {
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          setError("بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.");
+          if (error.message?.includes("Email not confirmed")) {
+            setError("لم يتم تأكيد البريد الإلكتروني بعد. يرجى التحقق من بريدك الإلكتروني.");
+          } else {
+            setError("بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.");
+          }
         } else {
           navigate("/dashboard");
         }
