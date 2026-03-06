@@ -1,15 +1,19 @@
-import { Home, FileText, LayoutDashboard } from "lucide-react";
+import { Home, FileText, LayoutDashboard, LogIn } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const navItems = [
-  { label: "الرئيسية", icon: Home, path: "/" },
-  { label: "تقديم بلاغ", icon: FileText, path: "/report" },
-  { label: "لوحة المرشد", icon: LayoutDashboard, path: "/dashboard" },
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { session } = useAuth();
+
+  const navItems = [
+    { label: "الرئيسية", icon: Home, path: "/" },
+    { label: "تقديم بلاغ", icon: FileText, path: "/report" },
+    ...(session
+      ? [{ label: "لوحة المرشد", icon: LayoutDashboard, path: "/dashboard" }]
+      : [{ label: "دخول المرشد", icon: LogIn, path: "/login" }]),
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 sm:hidden">
