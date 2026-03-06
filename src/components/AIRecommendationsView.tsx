@@ -60,7 +60,7 @@ const AIRecommendationsView = ({ aiResult }: Props) => {
             ))}
           </ul>
           <p className="text-small text-muted-foreground bg-muted/50 rounded-md p-3 leading-relaxed">
-            ⚠️ هذه توصيات أولية مبنية على إرشادات تعليمية رسمية وسيتم مراجعتها من قبل المرشد الطلابي.
+            ⚠️ هذه التوصيات مبنية على الأدلة الرسمية لوزارة التعليم في المملكة العربية السعودية وسيتم مراجعتها من قبل المرشد الطلابي.
           </p>
         </motion.div>
 
