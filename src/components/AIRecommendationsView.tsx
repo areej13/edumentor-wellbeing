@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Brain, CheckCircle2, Loader2 } from "lucide-react";
+import { Brain, CheckCircle2, BookOpen, Footprints, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AIRecommendation {
@@ -9,6 +8,7 @@ interface AIRecommendation {
   detected_emotion: string;
   severity: string;
   supportive_message: string;
+  scenario?: string;
 }
 
 interface Props {
@@ -36,12 +36,25 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
           <h2 className="text-title-section font-bold text-primary mb-2">
             تم استلام بلاغك بسرية تامة
           </h2>
-          <p className="text-body text-muted-foreground">
-            {aiResult.supportive_message}
-          </p>
         </motion.div>
 
-        {/* AI Recommendations */}
+        {/* Scenario Section */}
+        {aiResult.scenario && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-primary/5 border border-primary/20 rounded-lg p-5 mb-4"
+          >
+            <h3 className="text-title-sub font-bold text-primary mb-3 flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              سيناريو مشابه
+            </h3>
+            <p className="text-body text-foreground/90 leading-relaxed">{aiResult.scenario}</p>
+          </motion.div>
+        )}
+
+        {/* Recommended Steps */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -49,18 +62,42 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
           className="bg-accent/5 border border-accent/20 rounded-lg p-5 mb-4"
         >
           <h3 className="text-title-sub font-bold text-accent mb-3 flex items-center gap-2">
-            <Brain className="w-5 h-5" />
-            توصيات أولية من المرشد الذكي
+            <Footprints className="w-5 h-5" />
+            خطوات مقترحة
           </h3>
           <ul className="space-y-2.5 mb-4">
             {aiResult.recommendations.map((rec, i) => (
               <li key={i} className="text-body text-foreground flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0" />
+                <span className="w-6 h-6 rounded-full bg-accent/10 text-accent text-small font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
                 {rec}
               </li>
             ))}
           </ul>
-          <p className="text-small text-muted-foreground bg-muted/50 rounded-md p-3 leading-relaxed">
+        </motion.div>
+
+        {/* Support Message */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-success/5 border border-success/20 rounded-lg p-5 mb-4"
+        >
+          <h3 className="text-title-sub font-bold text-success mb-2 flex items-center gap-2">
+            <Heart className="w-5 h-5" />
+            رسالة دعم
+          </h3>
+          <p className="text-body text-foreground/90 leading-relaxed">{aiResult.supportive_message}</p>
+        </motion.div>
+
+        {/* Disclaimer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <p className="text-small text-muted-foreground bg-muted/50 rounded-md p-3 leading-relaxed mb-4">
             ⚠️ {role === "teacher"
               ? "هذه التوصيات مبنية على الأدلة الرسمية لوزارة التعليم والأطر التربوية العالمية المعتمدة (OECD, CASEL, UNESCO) وسيتم مراجعتها من قبل المرشد الطلابي."
               : "هذه التوصيات مبنية على الأدلة الرسمية لوزارة التعليم في المملكة العربية السعودية وسيتم مراجعتها من قبل المرشد الطلابي."}
