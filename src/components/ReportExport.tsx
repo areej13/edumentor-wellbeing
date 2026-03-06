@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileDown, FileText, Printer } from "lucide-react";
+import { FileDown, FileText, Printer, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -26,9 +26,18 @@ interface Props {
 
 const ReportExport = ({ reports, selectedReport }: Props) => {
   const [exporting, setExporting] = useState(false);
+  const [filterCat, setFilterCat] = useState("الكل");
+  const [showFilter, setShowFilter] = useState(false);
+
+  const categories = Array.from(new Set(reports.map(r => r.category)));
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
   const roleLabel = (r: string) => r === "student" ? "طالب" : "معلم";
+
+  const getFilteredReports = () => {
+    if (filterCat === "الكل") return reports;
+    return reports.filter(r => r.category === filterCat);
+  };
 
   const exportDocx = async (single?: Report) => {
     setExporting(true);
@@ -36,14 +45,19 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
       const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } = await import("docx");
       const { saveAs } = await import("file-saver");
 
-      const target = single ? [single] : reports;
+      const target = single ? [single] : getFilteredReports();
       const children: any[] = [];
 
-      // Title
+      const titleText = single
+        ? "تقرير حالة فردية"
+        : filterCat !== "الكل"
+          ? `تقرير بلاغات: ${filterCat}`
+          : "تقرير شامل - المرشد الذكي";
+
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 300 },
-        children: [new TextRun({ text: single ? "تقرير حالة فردية" : "تقرير شامل - المرشد الذكي", bold: true, size: 32, font: "Arial" })],
+        children: [new TextRun({ text: titleText, bold: true, size: 32, font: "Arial" })],
       }));
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -52,11 +66,10 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
       }));
 
       if (!single) {
-        // Summary stats
-        const total = reports.length;
-        const newR = reports.filter(r => r.status === "جديد").length;
-        const inRev = reports.filter(r => r.status === "قيد المراجعة").length;
-        const done = reports.filter(r => r.status === "تمت المعالجة").length;
+        const total = target.length;
+        const newR = target.filter(r => r.status === "جديد").length;
+        const inRev = target.filter(r => r.status === "قيد المراجعة").length;
+        const done = target.filter(r => r.status === "تمت المعالجة").length;
 
         const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
         const borders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
@@ -80,9 +93,8 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
           ],
         }));
 
-        // Category breakdown
         const cats: Record<string, number> = {};
-        reports.forEach(r => { cats[r.category] = (cats[r.category] || 0) + 1; });
+        target.forEach(r => { cats[r.category] = (cats[r.category] || 0) + 1; });
         children.push(new Paragraph({ spacing: { before: 300, after: 100 }, children: [new TextRun({ text: "التوزيع حسب التصنيف", bold: true, size: 24, font: "Arial" })] }));
         Object.entries(cats).forEach(([cat, count]) => {
           children.push(new Paragraph({ spacing: { after: 50 }, children: [new TextRun({ text: `• ${cat}: ${count} بلاغ`, size: 22, font: "Arial" })] }));
@@ -118,12 +130,16 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
         }
       });
 
-      // Footer
       children.push(new Paragraph({ spacing: { before: 400 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: "المرشد الذكي - EDUMENTOR AI | تم إنشاؤه تلقائياً", size: 18, font: "Arial", color: "999999" })] }));
 
       const doc = new Document({ sections: [{ children }] });
       const blob = await Packer.toBlob(doc);
-      saveAs(blob, single ? `تقرير-حالة-${single.id.slice(0, 8)}.docx` : "تقرير-شامل-المرشد-الذكي.docx");
+      const fileName = single
+        ? `تقرير-حالة-${single.id.slice(0, 8)}.docx`
+        : filterCat !== "الكل"
+          ? `تقرير-${filterCat}.docx`
+          : "تقرير-شامل-المرشد-الذكي.docx";
+      saveAs(blob, fileName);
       toast.success("تم تصدير التقرير بنجاح");
     } catch (e) {
       console.error(e);
@@ -133,13 +149,19 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
   };
 
   const printReport = (single?: Report) => {
-    const target = single ? [single] : reports;
-    const total = reports.length;
-    const newR = reports.filter(r => r.status === "جديد").length;
-    const inRev = reports.filter(r => r.status === "قيد المراجعة").length;
-    const done = reports.filter(r => r.status === "تمت المعالجة").length;
+    const target = single ? [single] : getFilteredReports();
+    const total = target.length;
+    const newR = target.filter(r => r.status === "جديد").length;
+    const inRev = target.filter(r => r.status === "قيد المراجعة").length;
+    const done = target.filter(r => r.status === "تمت المعالجة").length;
 
-    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${single ? "تقرير حالة" : "تقرير شامل"}</title>
+    const titleText = single
+      ? "تقرير حالة فردية"
+      : filterCat !== "الكل"
+        ? `تقرير بلاغات: ${filterCat}`
+        : "تقرير شامل";
+
+    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${titleText}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
       body{font-family:Arial,sans-serif;padding:30px;color:#222;font-size:14px;line-height:1.7}
@@ -161,7 +183,7 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
       @media print{body{padding:15px}.stats{gap:8px}}
     </style></head><body>
     <h1>المرشد الذكي - EDUMENTOR AI</h1>
-    <p class="date">${single ? "تقرير حالة فردية" : "تقرير شامل"} | ${formatDate(new Date().toISOString())}</p>
+    <p class="date">${titleText} | ${formatDate(new Date().toISOString())}</p>
     ${!single ? `<div class="stats">
       <div class="stat"><div class="num">${total}</div><div class="lbl">إجمالي</div></div>
       <div class="stat"><div class="num">${newR}</div><div class="lbl">جديد</div></div>
@@ -189,27 +211,57 @@ const ReportExport = ({ reports, selectedReport }: Props) => {
     }
   };
 
+  if (selectedReport) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => exportDocx(selectedReport)} disabled={exporting} className="gap-1">
+          <FileText className="w-4 h-4" /> تصدير Word
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => printReport(selectedReport)} className="gap-1">
+          <Printer className="w-4 h-4" /> طباعة
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {selectedReport ? (
-        <>
-          <Button variant="outline" size="sm" onClick={() => exportDocx(selectedReport)} disabled={exporting} className="gap-1">
-            <FileText className="w-4 h-4" /> تصدير Word
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => printReport(selectedReport)} className="gap-1">
-            <Printer className="w-4 h-4" /> طباعة
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button variant="outline" size="sm" onClick={() => exportDocx()} disabled={exporting} className="gap-1">
-            <FileDown className="w-4 h-4" /> {exporting ? "جارٍ التصدير..." : "تصدير Word شامل"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => printReport()} className="gap-1">
-            <Printer className="w-4 h-4" /> طباعة شاملة
-          </Button>
-        </>
-      )}
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Category Filter */}
+      <div className="relative">
+        <Button variant="outline" size="sm" onClick={() => setShowFilter(!showFilter)} className="gap-1">
+          <Filter className="w-4 h-4" />
+          {filterCat === "الكل" ? "كل التصنيفات" : filterCat}
+        </Button>
+        {showFilter && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setShowFilter(false)} />
+            <div className="absolute top-full mt-1 right-0 z-20 bg-card border border-border rounded-lg shadow-lg p-1 min-w-[160px]">
+              <button
+                onClick={() => { setFilterCat("الكل"); setShowFilter(false); }}
+                className={`w-full text-right px-3 py-2 rounded-md text-small transition-colors ${filterCat === "الكل" ? "bg-primary/10 text-primary font-bold" : "hover:bg-muted"}`}
+              >
+                كل التصنيفات
+              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { setFilterCat(cat); setShowFilter(false); }}
+                  className={`w-full text-right px-3 py-2 rounded-md text-small transition-colors ${filterCat === cat ? "bg-primary/10 text-primary font-bold" : "hover:bg-muted"}`}
+                >
+                  {cat} ({reports.filter(r => r.category === cat).length})
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <Button variant="outline" size="sm" onClick={() => exportDocx()} disabled={exporting} className="gap-1">
+        <FileDown className="w-4 h-4" /> {exporting ? "جارٍ التصدير..." : "تصدير Word"}
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => printReport()} className="gap-1">
+        <Printer className="w-4 h-4" /> طباعة
+      </Button>
     </div>
   );
 };
