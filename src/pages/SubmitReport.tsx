@@ -74,18 +74,20 @@ const SubmitReport = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Generate ID client-side for reference
+      const reportId = crypto.randomUUID();
+
       // Save report to database
-      const { data: report, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from("reports")
         .insert({
+          id: reportId,
           role: role!,
           education_level: level,
           category: category!,
           emotion,
           report_text: reportText,
-        })
-        .select()
-        .single();
+        });
 
       if (insertError) throw insertError;
 
@@ -119,7 +121,7 @@ const SubmitReport = () => {
             ai_category_suggestion: aiData.suggested_category,
             ai_emotion_detected: aiData.detected_emotion,
           })
-          .eq("id", report.id);
+          .eq("id", reportId);
       } else {
         // Still show success even if AI fails
         setAiResult({
