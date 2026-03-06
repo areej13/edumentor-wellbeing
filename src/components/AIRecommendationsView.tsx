@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   CheckCircle2, BookOpen, Footprints, Heart, 
   Lightbulb, HandHeart, MessageCircleHeart, ShieldCheck,
-  Sparkles, ArrowLeft, Eye
+  Sparkles, ArrowLeft, Eye, Copy, FileText, FileDown, Check, Share2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AIRecommendation {
   recommendations: string[];
@@ -40,8 +42,9 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
   const navigate = useNavigate();
   const isTeacher = role === "teacher";
   const stepMeta = isTeacher ? teacherStepMeta : studentStepMeta;
+  const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  // Parse step title from recommendation text (format: "title - content")
   const parseStep = (rec: string) => {
     const dashIndex = rec.indexOf(" - ");
     if (dashIndex > 0 && dashIndex < 30) {
@@ -49,6 +52,150 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
     }
     return { title: null, content: rec };
   };
+
+  const buildPlainText = () => {
+    const lines: string[] = [];
+    lines.push("المرشد الذكي - EDUMENTOR AI");
+    lines.push(`التصنيف: ${aiResult.suggested_category}`);
+    lines.push("");
+    if (aiResult.scenario) {
+      lines.push(`📖 سيناريو مشابه:`);
+      lines.push(aiResult.scenario);
+      lines.push("");
+    }
+    lines.push("📋 الخطوات المقترحة:");
+    aiResult.recommendations.forEach((rec, i) => {
+      const { title, content } = parseStep(rec);
+      lines.push(`${i + 1}. ${title ? `${title}: ` : ""}${content}`);
+    });
+    lines.push("");
+    lines.push(`💚 ${aiResult.supportive_message}`);
+    lines.push("");
+    lines.push("⚠️ هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.");
+    return lines.join("\n");
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(buildPlainText());
+      setCopied(true);
+      toast.success("تم نسخ التوصيات");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("تعذر النسخ");
+    }
+  };
+
+  const handleExportDocx = async () => {
+    setExporting(true);
+    try {
+      const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import("docx");
+      const { saveAs } = await import("file-saver");
+
+      const children: any[] = [];
+
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+        children: [new TextRun({ text: "المرشد الذكي - EDUMENTOR AI", bold: true, size: 32, font: "Arial" })],
+      }));
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 100 },
+        children: [new TextRun({ text: isTeacher ? "توصيات مهنية للمعلم" : "خطوات إرشادية للطالب", size: 24, font: "Arial", color: "666666" })],
+      }));
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300 },
+        children: [new TextRun({ text: `التصنيف: ${aiResult.suggested_category}`, size: 22, font: "Arial" })],
+      }));
+
+      if (aiResult.scenario) {
+        children.push(new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: "سيناريو مشابه:", bold: true, size: 24, font: "Arial" })] }));
+        children.push(new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: aiResult.scenario, size: 22, font: "Arial" })] }));
+      }
+
+      children.push(new Paragraph({ spacing: { before: 200, after: 150 }, children: [new TextRun({ text: "الخطوات المقترحة:", bold: true, size: 24, font: "Arial" })] }));
+
+      aiResult.recommendations.forEach((rec, i) => {
+        const { title, content } = parseStep(rec);
+        children.push(new Paragraph({
+          spacing: { after: 80 },
+          children: [
+            new TextRun({ text: `${i + 1}. `, bold: true, size: 22, font: "Arial" }),
+            ...(title ? [new TextRun({ text: `${title}: `, bold: true, size: 22, font: "Arial" })] : []),
+            new TextRun({ text: content, size: 22, font: "Arial" }),
+          ],
+        }));
+      });
+
+      children.push(new Paragraph({ spacing: { before: 250, after: 100 }, children: [new TextRun({ text: "رسالة دعم:", bold: true, size: 24, font: "Arial" })] }));
+      children.push(new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: aiResult.supportive_message, size: 22, font: "Arial", italics: true })] }));
+
+      const disclaimer = isTeacher
+        ? "توصيات مبنية على أدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وسيراجعها المرشد الطلابي."
+        : "هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.";
+      children.push(new Paragraph({ spacing: { before: 300 }, children: [new TextRun({ text: `⚠️ ${disclaimer}`, size: 18, font: "Arial", color: "999999" })] }));
+      children.push(new Paragraph({ spacing: { before: 200 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: "تم إنشاؤه بواسطة المرشد الذكي - EDUMENTOR AI", size: 16, font: "Arial", color: "AAAAAA" })] }));
+
+      const doc = new Document({ sections: [{ children }] });
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, "توصيات-المرشد-الذكي.docx");
+      toast.success("تم تصدير التوصيات بنجاح");
+    } catch (e) {
+      console.error(e);
+      toast.error("خطأ في التصدير");
+    }
+    setExporting(false);
+  };
+
+  const handlePrintPDF = () => {
+    const stepsHtml = aiResult.recommendations.map((rec, i) => {
+      const { title, content } = parseStep(rec);
+      return `<div class="step"><div class="step-num">${i + 1}</div><div><strong>${title || ""}</strong><p>${content}</p></div></div>`;
+    }).join("");
+
+    const disclaimer = isTeacher
+      ? "توصيات مبنية على أدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وسيراجعها المرشد الطلابي."
+      : "هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.";
+
+    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>توصيات المرشد الذكي</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:Arial,sans-serif;padding:40px;color:#222;line-height:1.8;max-width:700px;margin:0 auto}
+      h1{text-align:center;color:#1a3a6b;font-size:22px;margin-bottom:4px}
+      .sub{text-align:center;color:#888;font-size:14px;margin-bottom:25px}
+      .scenario{background:#f0f4ff;border-radius:10px;padding:15px;margin-bottom:20px;border-right:4px solid #1a3a6b}
+      .scenario h3{color:#1a3a6b;margin-bottom:6px;font-size:15px}
+      .steps{margin-bottom:20px}
+      .steps h3{color:#1a3a6b;margin-bottom:12px;font-size:16px}
+      .step{display:flex;gap:12px;align-items:flex-start;background:#fafbff;border:1px solid #e8ecf4;border-radius:10px;padding:14px;margin-bottom:10px}
+      .step-num{width:32px;height:32px;border-radius:50%;background:#1a3a6b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex-shrink:0}
+      .step p{font-size:14px;margin-top:2px;color:#444}
+      .support{background:#f0faf0;border-radius:10px;padding:15px;margin-bottom:20px;border-right:4px solid #22c55e}
+      .support h3{color:#22c55e;margin-bottom:6px;font-size:15px}
+      .disclaimer{color:#999;font-size:12px;text-align:center;margin-top:25px;padding-top:15px;border-top:1px solid #eee}
+      .footer{text-align:center;color:#bbb;font-size:11px;margin-top:10px}
+      @media print{body{padding:20px}}
+    </style></head><body>
+    <h1>المرشد الذكي - EDUMENTOR AI</h1>
+    <p class="sub">${isTeacher ? "توصيات مهنية للمعلم" : "خطوات إرشادية للطالب"} | التصنيف: ${aiResult.suggested_category}</p>
+    ${aiResult.scenario ? `<div class="scenario"><h3>📖 سيناريو مشابه</h3><p>${aiResult.scenario}</p></div>` : ""}
+    <div class="steps"><h3>📋 الخطوات المقترحة</h3>${stepsHtml}</div>
+    <div class="support"><h3>💚 رسالة دعم</h3><p>${aiResult.supportive_message}</p></div>
+    <p class="disclaimer">⚠️ ${disclaimer}</p>
+    <p class="footer">تم إنشاؤه بواسطة المرشد الذكي - EDUMENTOR AI</p>
+    </body></html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  };
+
+  const animDelay = 0.6 + aiResult.recommendations.length * 0.12;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pb-24 pt-8 sm:pb-8">
@@ -114,7 +261,6 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
                 className={`relative rounded-2xl bg-gradient-to-br ${meta.gradient} border ${meta.border} p-4 shadow-sm`}
               >
                 <div className="flex items-start gap-3.5">
-                  {/* Step Icon */}
                   <div className="relative shrink-0">
                     <div className="w-11 h-11 rounded-xl bg-card/80 shadow-sm flex items-center justify-center">
                       <Icon className={`w-5 h-5 ${meta.iconColor}`} />
@@ -123,8 +269,6 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
                       {i + 1}
                     </span>
                   </div>
-
-                  {/* Content */}
                   <div className="min-w-0 pt-0.5 flex-1">
                     <p className="text-small font-bold text-foreground/70 mb-1">
                       {title || meta.label}
@@ -173,11 +317,52 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
             : "هذي خطوات أولية مبنية على إرشادات وزارة التعليم وبيراجعها المرشد الطلابي."}
         </motion.p>
 
+        {/* Share & Export Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: animDelay }}
+          className="rounded-2xl bg-card border border-border p-4"
+        >
+          <p className="text-small font-bold text-foreground/70 mb-3 flex items-center gap-1.5">
+            <Share2 className="w-4 h-4" />
+            مشاركة وتصدير التوصيات
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={handleCopy}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/60 hover:bg-muted transition-colors text-center"
+            >
+              {copied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5 text-muted-foreground" />}
+              <span className="text-small font-medium text-foreground/80">
+                {copied ? "تم النسخ" : "نسخ النص"}
+              </span>
+            </button>
+            <button
+              onClick={handleExportDocx}
+              disabled={exporting}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/60 hover:bg-muted transition-colors text-center disabled:opacity-50"
+            >
+              <FileText className="w-5 h-5 text-muted-foreground" />
+              <span className="text-small font-medium text-foreground/80">
+                {exporting ? "جارٍ..." : "تصدير Word"}
+              </span>
+            </button>
+            <button
+              onClick={handlePrintPDF}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/60 hover:bg-muted transition-colors text-center"
+            >
+              <FileDown className="w-5 h-5 text-muted-foreground" />
+              <span className="text-small font-medium text-foreground/80">طباعة / PDF</span>
+            </button>
+          </div>
+        </motion.div>
+
         {/* Back Button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 + aiResult.recommendations.length * 0.12 }}
+          transition={{ delay: animDelay + 0.1 }}
           onClick={() => navigate("/")}
           className="w-full flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-primary text-primary-foreground text-btn font-bold shadow-sm hover:shadow-md transition-shadow"
         >
