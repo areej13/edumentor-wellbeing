@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Brain, Users, BookOpen, AlertTriangle, Settings, Building, Lightbulb, MoreHorizontal } from "lucide-react";
+import { Brain, Users, BookOpen, AlertTriangle, Settings, Building, Lightbulb, MoreHorizontal, UserCheck, MessageCircle, Briefcase, HeartPulse } from "lucide-react";
 
-const categories = [
+const studentCategories = [
   { label: "نفسية", icon: Brain },
   { label: "اجتماعية", icon: Users },
   { label: "أكاديمية", icon: BookOpen },
@@ -12,14 +12,29 @@ const categories = [
   { label: "أخرى", icon: MoreHorizontal },
 ];
 
+const teacherCategories = [
+  { label: "إدارة الصف", icon: Users },
+  { label: "سلوك الطلاب", icon: AlertTriangle },
+  { label: "صعوبات أكاديمية", icon: BookOpen },
+  { label: "عبء العمل", icon: Briefcase },
+  { label: "تحديات التواصل", icon: MessageCircle },
+  { label: "البيئة المدرسية", icon: Building },
+  { label: "الدعم النفسي للمعلم", icon: HeartPulse },
+  { label: "اقتراح تطويري", icon: Lightbulb },
+  { label: "أخرى", icon: MoreHorizontal },
+];
+
 interface CategorySelectorProps {
   selected: string | null;
   onSelect: (category: string) => void;
+  role?: string | null;
 }
 
-const CategorySelector = ({ selected, onSelect }: CategorySelectorProps) => {
+const CategorySelector = ({ selected, onSelect, role }: CategorySelectorProps) => {
+  const categories = role === "teacher" ? teacherCategories : studentCategories;
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {categories.map((cat, i) => {
         const Icon = cat.icon;
         return (

@@ -9,12 +9,21 @@ import CategorySelector from "@/components/CategorySelector";
 import EmotionSelector from "@/components/EmotionSelector";
 import AIRecommendationsView from "@/components/AIRecommendationsView";
 
-const suggestions = [
+const studentSuggestions = [
   "هل تواجه صعوبة في فهم الدروس؟",
   "هل تشعر بالضغط بسبب الواجبات؟",
   "هل تعرضت للتنمر؟",
   "هل لديك مشكلة مع أحد في المدرسة؟",
   "هل تحتاج إلى مساعدة أو دعم؟",
+];
+
+const teacherSuggestions = [
+  "أواجه صعوبة في إدارة الصف الدراسي",
+  "أحتاج استراتيجيات للتعامل مع سلوك طالب",
+  "أشعر بضغط العمل وعبء المهام",
+  "أحتاج دعم في التواصل مع أولياء الأمور",
+  "أبحث عن طرق لتحسين البيئة الصفية",
+  "أحتاج مساعدة في دعم طالب يعاني نفسياً",
 ];
 
 const educationLevels = [
@@ -161,7 +170,7 @@ const SubmitReport = () => {
 
   // Show AI recommendations after submission
   if (aiResult) {
-    return <AIRecommendationsView aiResult={aiResult} />;
+    return <AIRecommendationsView aiResult={aiResult} role={role} />;
   }
 
   // Show loading state during submission
@@ -235,7 +244,7 @@ const SubmitReport = () => {
             <motion.div key="category" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">نوع البلاغ</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر التصنيف المناسب</p>
-              <CategorySelector selected={category} onSelect={setCategory} />
+              <CategorySelector selected={category} onSelect={setCategory} role={role} />
             </motion.div>
           )}
 
@@ -255,7 +264,7 @@ const SubmitReport = () => {
               <p className="text-body text-muted-foreground text-center mb-4">اكتب أو تحدث عن مشكلتك</p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {suggestions.map((s) => (
+                {(role === "teacher" ? teacherSuggestions : studentSuggestions).map((s) => (
                   <button
                     key={s}
                     onClick={() => setReportText((prev) => (prev ? prev + " " + s : s))}
