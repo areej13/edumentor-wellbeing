@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Mic, MicOff, Send, CheckCircle2, User, GraduationCap } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mic, MicOff, Send, Loader2, User, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import StepIndicator from "@/components/StepIndicator";
 import CategorySelector from "@/components/CategorySelector";
 import EmotionSelector from "@/components/EmotionSelector";
+import AIRecommendationsView from "@/components/AIRecommendationsView";
 
 const suggestions = [
   "هل تواجه صعوبة في فهم الدروس؟",
@@ -26,6 +29,14 @@ const pageVariants = {
   exit: { opacity: 0, x: 30 },
 };
 
+interface AIResult {
+  recommendations: string[];
+  suggested_category: string;
+  detected_emotion: string;
+  severity: string;
+  supportive_message: string;
+}
+
 const SubmitReport = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -35,7 +46,8 @@ const SubmitReport = () => {
   const [emotion, setEmotion] = useState<string | null>(null);
   const [reportText, setReportText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
 
   const totalSteps = 5;
 
@@ -59,8 +71,71 @@ const SubmitReport = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Save report to database
+      const { data: report, error: insertError } = await supabase
+        .from("reports")
+        .insert({
+          role: role!,
+          education_level: level,
+          category: category!,
+          emotion,
+          report_text: reportText,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Call AI analysis
+      const aiResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-report`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            report_text: reportText,
+            category,
+            emotion,
+            role,
+          }),
+        }
+      );
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        setAiResult(aiData);
+
+        // Update report with AI recommendations
+        await supabase
+          .from("reports")
+          .update({
+            ai_recommendations: aiData.recommendations,
+            ai_category_suggestion: aiData.suggested_category,
+            ai_emotion_detected: aiData.detected_emotion,
+          })
+          .eq("id", report.id);
+      } else {
+        // Still show success even if AI fails
+        setAiResult({
+          recommendations: ["سيتم مراجعة بلاغك من قبل المرشد الطلابي في أقرب وقت."],
+          suggested_category: category!,
+          detected_emotion: emotion || "",
+          severity: "medium",
+          supportive_message: "شكراً لمساهمتك. تم استلام بلاغك بنجاح.",
+        });
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleRecording = () => {
@@ -82,33 +157,19 @@ const SubmitReport = () => {
     }
   };
 
-  if (submitted) {
+  // Show AI recommendations after submission
+  if (aiResult) {
+    return <AIRecommendationsView aiResult={aiResult} />;
+  }
+
+  // Show loading state during submission
+  if (isSubmitting) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 pb-20 sm:pb-0">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.2 }}
-          >
-            <CheckCircle2 className="w-20 h-20 text-success mx-auto mb-6" />
-          </motion.div>
-          <h2 className="text-title-section font-bold text-primary mb-4">
-            تم استلام بلاغك بسرية تامة
-          </h2>
-          <p className="text-body text-muted-foreground mb-8">
-            شكراً لمساهمتك في تحسين البيئة التعليمية.
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="px-8 py-3 rounded-lg bg-primary text-primary-foreground text-btn font-bold"
-          >
-            العودة للرئيسية
-          </button>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+          <Loader2 className="w-12 h-12 text-accent animate-spin mx-auto mb-4" />
+          <p className="text-title-sub font-bold text-primary mb-2">جارٍ تحليل البلاغ...</p>
+          <p className="text-body text-muted-foreground">يقوم المرشد الذكي بتحليل بلاغك وتقديم توصيات أولية</p>
         </motion.div>
       </div>
     );
@@ -191,7 +252,6 @@ const SubmitReport = () => {
               <h2 className="text-title-section font-bold text-center mb-2">وصف المشكلة</h2>
               <p className="text-body text-muted-foreground text-center mb-4">اكتب أو تحدث عن مشكلتك</p>
 
-              {/* Suggestions */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {suggestions.map((s) => (
                   <button
@@ -204,7 +264,6 @@ const SubmitReport = () => {
                 ))}
               </div>
 
-              {/* Textarea */}
               <div className="relative">
                 <textarea
                   value={reportText}

@@ -38,6 +38,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          ai_category_suggestion: string | null
+          ai_emotion_detected: string | null
+          ai_recommendations: string[] | null
+          category: string
+          counselor_id: string | null
+          counselor_notes: string | null
+          counselor_recommendation: string | null
+          created_at: string
+          education_level: string | null
+          emotion: string | null
+          id: string
+          report_text: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_category_suggestion?: string | null
+          ai_emotion_detected?: string | null
+          ai_recommendations?: string[] | null
+          category: string
+          counselor_id?: string | null
+          counselor_notes?: string | null
+          counselor_recommendation?: string | null
+          created_at?: string
+          education_level?: string | null
+          emotion?: string | null
+          id?: string
+          report_text: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_category_suggestion?: string | null
+          ai_emotion_detected?: string | null
+          ai_recommendations?: string[] | null
+          category?: string
+          counselor_id?: string | null
+          counselor_notes?: string | null
+          counselor_recommendation?: string | null
+          created_at?: string
+          education_level?: string | null
+          emotion?: string | null
+          id?: string
+          report_text?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
