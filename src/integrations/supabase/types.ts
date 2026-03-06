@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      counselor_solutions: {
+        Row: {
+          category: string
+          content: string
+          counselor_id: string
+          created_at: string
+          id: string
+          is_reusable: boolean
+          title: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category: string
+          content: string
+          counselor_id: string
+          created_at?: string
+          id?: string
+          is_reusable?: boolean
+          title: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          counselor_id?: string
+          created_at?: string
+          id?: string
+          is_reusable?: boolean
+          title?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       knowledge_documents: {
         Row: {
           category: string
