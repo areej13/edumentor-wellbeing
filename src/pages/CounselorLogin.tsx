@@ -60,6 +60,41 @@ const CounselorLogin = () => {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md"
       >
+        {/* Demo Account Banner */}
+        <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 text-center mb-6">
+          <p className="text-small font-semibold text-foreground mb-2">🔑 حساب تجريبي للاختبار</p>
+          <div className="flex flex-col gap-0.5 text-small text-muted-foreground font-mono mb-3" dir="ltr">
+            <span>demo@edumentor.app</span>
+            <span>Demo@12345</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2 text-small"
+            disabled={isLoading}
+            onClick={async () => {
+              setError("");
+              setIsLoading(true);
+              try {
+                const { error } = await signIn("demo@edumentor.app", "Demo@12345");
+                if (error) {
+                  setError("تعذّر الدخول بالحساب التجريبي.");
+                } else {
+                  navigate("/dashboard");
+                }
+              } catch {
+                setError("حدث خطأ غير متوقع.");
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+          >
+            <LogIn className="w-4 h-4" />
+            دخول تجريبي سريع
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <motion.div
@@ -177,42 +212,6 @@ const CounselorLogin = () => {
             </button>
           </div>
         </div>
-
-        {/* Demo Account */}
-        <div className="mt-4 bg-muted/50 border border-border rounded-xl p-4 text-center">
-          <p className="text-small font-semibold text-foreground mb-2">حساب تجريبي للاختبار</p>
-          <div className="flex flex-col gap-1 text-small text-muted-foreground mb-3 font-mono" dir="ltr">
-            <span>demo@edumentor.app</span>
-            <span>Demo@12345</span>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2 text-small"
-            disabled={isLoading}
-            onClick={async () => {
-              setError("");
-              setIsLoading(true);
-              try {
-                const { error } = await signIn("demo@edumentor.app", "Demo@12345");
-                if (error) {
-                  setError("تعذّر الدخول بالحساب التجريبي.");
-                } else {
-                  navigate("/dashboard");
-                }
-              } catch {
-                setError("حدث خطأ غير متوقع.");
-              } finally {
-                setIsLoading(false);
-              }
-            }}
-          >
-            <LogIn className="w-4 h-4" />
-            دخول تجريبي
-          </Button>
-        </div>
-
         {/* Privacy note */}
         <p className="text-center text-small text-muted-foreground mt-4">
           جميع البيانات محمية ومشفرة بالكامل.
