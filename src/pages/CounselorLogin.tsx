@@ -61,17 +61,28 @@ const CounselorLogin = () => {
         className="w-full max-w-md"
       >
         {/* Demo Account Banner */}
-        <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 text-center mb-6">
-          <p className="text-small font-semibold text-foreground mb-2">🔑 حساب تجريبي للاختبار</p>
-          <div className="flex flex-col gap-0.5 text-small text-muted-foreground font-mono mb-3" dir="ltr">
-            <span>demo@edumentor.app</span>
-            <span>Demo@12345</span>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-accent/10 border border-accent/30 rounded-2xl p-5 text-center mb-6 shadow-sm"
+        >
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-lg">🔑</span>
+            <p className="text-body font-bold text-foreground">حساب تجريبي للاختبار</p>
+          </div>
+          <div className="bg-background/60 rounded-lg p-3 mb-4 border border-border/50" dir="ltr">
+            <div className="flex items-center justify-center gap-3 text-small font-mono text-muted-foreground">
+              <span>demo@edumentor.app</span>
+              <span className="text-border">|</span>
+              <span>Demo@12345</span>
+            </div>
           </div>
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2 text-small"
+            variant="default"
+            size="lg"
+            className="w-full gap-2 font-bold"
             disabled={isLoading}
             onClick={async () => {
               setError("");
@@ -79,7 +90,7 @@ const CounselorLogin = () => {
               try {
                 const { error } = await signIn("demo@edumentor.app", "Demo@12345");
                 if (error) {
-                  setError("تعذّر الدخول بالحساب التجريبي.");
+                  setError("تعذّر الدخول بالحساب التجريبي. يرجى المحاولة لاحقاً.");
                 } else {
                   navigate("/dashboard");
                 }
@@ -90,10 +101,16 @@ const CounselorLogin = () => {
               }
             }}
           >
-            <LogIn className="w-4 h-4" />
-            دخول تجريبي سريع
+            {isLoading ? (
+              <span className="animate-spin w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
+            ) : (
+              <>
+                <LogIn className="w-5 h-5" />
+                دخول تجريبي سريع
+              </>
+            )}
           </Button>
-        </div>
+        </motion.div>
 
         {/* Header */}
         <div className="text-center mb-8">
