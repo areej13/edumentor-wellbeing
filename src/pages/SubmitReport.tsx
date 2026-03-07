@@ -58,15 +58,21 @@ const SubmitReport = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
 
-  const totalSteps = 5;
+  // Teachers skip education level step
+  const isTeacher = role === "teacher";
+  const steps = isTeacher
+    ? ["role", "category", "emotion", "text"]
+    : ["role", "level", "category", "emotion", "text"];
+  const totalSteps = steps.length;
+  const currentStepName = steps[step - 1];
 
   const canNext = () => {
-    switch (step) {
-      case 1: return !!role;
-      case 2: return !!level;
-      case 3: return !!category;
-      case 4: return !!emotion;
-      case 5: return reportText.trim().length > 0;
+    switch (currentStepName) {
+      case "role": return !!role;
+      case "level": return !!level;
+      case "category": return !!category;
+      case "emotion": return !!emotion;
+      case "text": return reportText.trim().length > 0;
       default: return false;
     }
   };
@@ -192,8 +198,8 @@ const SubmitReport = () => {
         <StepIndicator currentStep={step} totalSteps={totalSteps} />
 
         <AnimatePresence mode="wait">
-          {/* Step 1: Role */}
-          {step === 1 && (
+          {/* Step: Role */}
+          {currentStepName === "role" && (
             <motion.div key="role" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">من أنت؟</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر نوع المستخدم</p>
@@ -206,7 +212,10 @@ const SubmitReport = () => {
                   return (
                     <button
                       key={item.value}
-                      onClick={() => setRole(item.value)}
+                      onClick={() => {
+                        setRole(item.value);
+                        if (item.value === "teacher") setLevel(null);
+                      }}
                       className={`flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-colors duration-200
                         ${role === item.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-primary/30"}`}
                     >
@@ -219,8 +228,8 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 2: Level */}
-          {step === 2 && (
+          {/* Step: Level (students only) */}
+          {currentStepName === "level" && (
             <motion.div key="level" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">المرحلة الدراسية</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر المرحلة</p>
@@ -239,8 +248,8 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Category */}
-          {step === 3 && (
+          {/* Step: Category */}
+          {currentStepName === "category" && (
             <motion.div key="category" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">نوع البلاغ</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر التصنيف المناسب</p>
@@ -248,23 +257,23 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 4: Emotion */}
-          {step === 4 && (
+          {/* Step: Emotion */}
+          {currentStepName === "emotion" && (
             <motion.div key="emotion" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
-              <h2 className="text-title-section font-bold text-center mb-2">كيف تشعر؟</h2>
-              <p className="text-body text-muted-foreground text-center mb-6">اختر المشاعر التي تعبر عنك</p>
+              <h2 className="text-title-section font-bold text-center mb-2">{isTeacher ? "كيف تشعر حالياً؟" : "كيف تشعر؟"}</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">{isTeacher ? "حدد حالتك المهنية الحالية" : "اختر المشاعر التي تعبر عنك"}</p>
               <EmotionSelector selected={emotion} onSelect={setEmotion} />
             </motion.div>
           )}
 
-          {/* Step 5: Report Text */}
-          {step === 5 && (
+          {/* Step: Report Text */}
+          {currentStepName === "text" && (
             <motion.div key="text" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
-              <h2 className="text-title-section font-bold text-center mb-2">وصف المشكلة</h2>
-              <p className="text-body text-muted-foreground text-center mb-4">اكتب أو تحدث عن مشكلتك</p>
+              <h2 className="text-title-section font-bold text-center mb-2">{isTeacher ? "وصف الموقف" : "وصف المشكلة"}</h2>
+              <p className="text-body text-muted-foreground text-center mb-4">{isTeacher ? "اكتب أو تحدث عن التحدي الذي تواجهه" : "اكتب أو تحدث عن مشكلتك"}</p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {(role === "teacher" ? teacherSuggestions : studentSuggestions).map((s) => (
+                {(isTeacher ? teacherSuggestions : studentSuggestions).map((s) => (
                   <button
                     key={s}
                     onClick={() => setReportText((prev) => (prev ? prev + " " + s : s))}
@@ -279,7 +288,7 @@ const SubmitReport = () => {
                 <textarea
                   value={reportText}
                   onChange={(e) => setReportText(e.target.value)}
-                  placeholder="اكتب هنا أو استخدم المايكروفون..."
+                  placeholder={isTeacher ? "اكتب هنا عن التحدي المهني..." : "اكتب هنا أو استخدم المايكروفون..."}
                   rows={5}
                   className="w-full p-4 rounded-lg border-2 border-border bg-card text-body resize-none focus:outline-none focus:border-accent transition-colors duration-200"
                 />
