@@ -58,15 +58,21 @@ const SubmitReport = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
 
-  const totalSteps = 5;
+  // Teachers skip education level step
+  const isTeacher = role === "teacher";
+  const steps = isTeacher
+    ? ["role", "category", "emotion", "text"]
+    : ["role", "level", "category", "emotion", "text"];
+  const totalSteps = steps.length;
+  const currentStepName = steps[step - 1];
 
   const canNext = () => {
-    switch (step) {
-      case 1: return !!role;
-      case 2: return !!level;
-      case 3: return !!category;
-      case 4: return !!emotion;
-      case 5: return reportText.trim().length > 0;
+    switch (currentStepName) {
+      case "role": return !!role;
+      case "level": return !!level;
+      case "category": return !!category;
+      case "emotion": return !!emotion;
+      case "text": return reportText.trim().length > 0;
       default: return false;
     }
   };
