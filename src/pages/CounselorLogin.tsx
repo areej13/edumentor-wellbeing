@@ -178,6 +178,41 @@ const CounselorLogin = () => {
           </div>
         </div>
 
+        {/* Demo Account */}
+        <div className="mt-4 bg-muted/50 border border-border rounded-xl p-4 text-center">
+          <p className="text-small font-semibold text-foreground mb-2">حساب تجريبي للاختبار</p>
+          <div className="flex flex-col gap-1 text-small text-muted-foreground mb-3 font-mono" dir="ltr">
+            <span>demo@edumentor.app</span>
+            <span>Demo@12345</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2 text-small"
+            disabled={isLoading}
+            onClick={async () => {
+              setError("");
+              setIsLoading(true);
+              try {
+                const { error } = await signIn("demo@edumentor.app", "Demo@12345");
+                if (error) {
+                  setError("تعذّر الدخول بالحساب التجريبي.");
+                } else {
+                  navigate("/dashboard");
+                }
+              } catch {
+                setError("حدث خطأ غير متوقع.");
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+          >
+            <LogIn className="w-4 h-4" />
+            دخول تجريبي
+          </Button>
+        </div>
+
         {/* Privacy note */}
         <p className="text-center text-small text-muted-foreground mt-4">
           جميع البيانات محمية ومشفرة بالكامل.
