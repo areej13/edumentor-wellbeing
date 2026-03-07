@@ -198,8 +198,8 @@ const SubmitReport = () => {
         <StepIndicator currentStep={step} totalSteps={totalSteps} />
 
         <AnimatePresence mode="wait">
-          {/* Step 1: Role */}
-          {step === 1 && (
+          {/* Step: Role */}
+          {currentStepName === "role" && (
             <motion.div key="role" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">من أنت؟</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر نوع المستخدم</p>
@@ -225,8 +225,8 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 2: Level */}
-          {step === 2 && (
+          {/* Step: Level (students only) */}
+          {currentStepName === "level" && (
             <motion.div key="level" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">المرحلة الدراسية</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر المرحلة</p>
@@ -245,8 +245,8 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Category */}
-          {step === 3 && (
+          {/* Step: Category */}
+          {currentStepName === "category" && (
             <motion.div key="category" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
               <h2 className="text-title-section font-bold text-center mb-2">نوع البلاغ</h2>
               <p className="text-body text-muted-foreground text-center mb-6">اختر التصنيف المناسب</p>
@@ -254,23 +254,23 @@ const SubmitReport = () => {
             </motion.div>
           )}
 
-          {/* Step 4: Emotion */}
-          {step === 4 && (
+          {/* Step: Emotion */}
+          {currentStepName === "emotion" && (
             <motion.div key="emotion" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
-              <h2 className="text-title-section font-bold text-center mb-2">كيف تشعر؟</h2>
-              <p className="text-body text-muted-foreground text-center mb-6">اختر المشاعر التي تعبر عنك</p>
+              <h2 className="text-title-section font-bold text-center mb-2">{isTeacher ? "كيف تشعر حالياً؟" : "كيف تشعر؟"}</h2>
+              <p className="text-body text-muted-foreground text-center mb-6">{isTeacher ? "حدد حالتك المهنية الحالية" : "اختر المشاعر التي تعبر عنك"}</p>
               <EmotionSelector selected={emotion} onSelect={setEmotion} />
             </motion.div>
           )}
 
-          {/* Step 5: Report Text */}
-          {step === 5 && (
+          {/* Step: Report Text */}
+          {currentStepName === "text" && (
             <motion.div key="text" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.25 }}>
-              <h2 className="text-title-section font-bold text-center mb-2">وصف المشكلة</h2>
-              <p className="text-body text-muted-foreground text-center mb-4">اكتب أو تحدث عن مشكلتك</p>
+              <h2 className="text-title-section font-bold text-center mb-2">{isTeacher ? "وصف الموقف" : "وصف المشكلة"}</h2>
+              <p className="text-body text-muted-foreground text-center mb-4">{isTeacher ? "اكتب أو تحدث عن التحدي الذي تواجهه" : "اكتب أو تحدث عن مشكلتك"}</p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {(role === "teacher" ? teacherSuggestions : studentSuggestions).map((s) => (
+                {(isTeacher ? teacherSuggestions : studentSuggestions).map((s) => (
                   <button
                     key={s}
                     onClick={() => setReportText((prev) => (prev ? prev + " " + s : s))}
@@ -285,7 +285,7 @@ const SubmitReport = () => {
                 <textarea
                   value={reportText}
                   onChange={(e) => setReportText(e.target.value)}
-                  placeholder="اكتب هنا أو استخدم المايكروفون..."
+                  placeholder={isTeacher ? "اكتب هنا عن التحدي المهني..." : "اكتب هنا أو استخدم المايكروفون..."}
                   rows={5}
                   className="w-full p-4 rounded-lg border-2 border-border bg-card text-body resize-none focus:outline-none focus:border-accent transition-colors duration-200"
                 />
