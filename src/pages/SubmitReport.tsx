@@ -212,7 +212,10 @@ const SubmitReport = () => {
                   return (
                     <button
                       key={item.value}
-                      onClick={() => setRole(item.value)}
+                      onClick={() => {
+                        setRole(item.value);
+                        if (item.value === "teacher") setLevel(null);
+                      }}
                       className={`flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-colors duration-200
                         ${role === item.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-primary/30"}`}
                     >
