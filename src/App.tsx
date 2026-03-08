@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import SubmitReport from "./pages/SubmitReport";
+import SimpleReport from "./pages/SimpleReport";
 import Dashboard from "./pages/Dashboard";
 import CounselorLogin from "./pages/CounselorLogin";
 import NotFound from "./pages/NotFound";
