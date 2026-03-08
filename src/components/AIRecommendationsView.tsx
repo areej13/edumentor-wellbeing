@@ -71,7 +71,7 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
     lines.push("");
     lines.push(`💚 ${aiResult.supportive_message}`);
     lines.push("");
-    lines.push("⚠️ هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.");
+    lines.push("⚠️ هذه توصيات أولية مبنية على الذكاء الاصطناعي وإرشادات وزارة التعليم وخبرة المرشد الطلابي. سيراجعها المرشد الطلابي.");
     return lines.join("\n");
   };
 
@@ -133,8 +133,8 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
       children.push(new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: aiResult.supportive_message, size: 22, font: "Arial", italics: true })] }));
 
       const disclaimer = isTeacher
-        ? "توصيات مبنية على أدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وسيراجعها المرشد الطلابي."
-        : "هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.";
+        ? "توصيات مبنية على الذكاء الاصطناعي وأدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وخبرة المرشد الطلابي."
+        : "توصيات أولية مبنية على الذكاء الاصطناعي وإرشادات وزارة التعليم وخبرة المرشد الطلابي.";
       children.push(new Paragraph({ spacing: { before: 300 }, children: [new TextRun({ text: `⚠️ ${disclaimer}`, size: 18, font: "Arial", color: "999999" })] }));
       children.push(new Paragraph({ spacing: { before: 200 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: "تم إنشاؤه بواسطة المرشد الذكي - EDUMENTOR AI", size: 16, font: "Arial", color: "AAAAAA" })] }));
 
@@ -156,8 +156,8 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
     }).join("");
 
     const disclaimer = isTeacher
-      ? "توصيات مبنية على أدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وسيراجعها المرشد الطلابي."
-      : "هذه توصيات أولية مبنية على إرشادات وزارة التعليم وسيراجعها المرشد الطلابي.";
+      ? "توصيات مبنية على الذكاء الاصطناعي وأدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وخبرة المرشد الطلابي."
+      : "توصيات أولية مبنية على الذكاء الاصطناعي وإرشادات وزارة التعليم وخبرة المرشد الطلابي.";
 
     const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>توصيات المرشد الذكي</title>
     <style>
@@ -313,8 +313,8 @@ const AIRecommendationsView = ({ aiResult, role }: Props) => {
           className="text-small text-muted-foreground bg-muted/40 rounded-xl p-3 leading-relaxed text-center"
         >
           ⚠️ {isTeacher
-            ? "توصيات مبنية على أدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وسيراجعها المرشد الطلابي."
-            : "هذي خطوات أولية مبنية على إرشادات وزارة التعليم وبيراجعها المرشد الطلابي."}
+            ? "توصيات مبنية على الذكاء الاصطناعي وأدلة وزارة التعليم والأطر التربوية العالمية (OECD, CASEL, UNESCO) وخبرة المرشد الطلابي داخل المدرسة. سيراجعها المرشد الطلابي."
+            : "هذي خطوات أولية مبنية على الذكاء الاصطناعي وإرشادات وزارة التعليم وخبرة المرشد الطلابي. بيراجعها المرشد الطلابي."}
         </motion.p>
 
         {/* Share & Export Buttons */}

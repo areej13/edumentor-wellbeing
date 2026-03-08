@@ -293,6 +293,25 @@ const Dashboard = () => {
                 <button onClick={saveReportUpdate} disabled={saving} className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground text-btn font-bold disabled:opacity-50">
                   <Save className="w-4 h-4" /> {saving ? "جارٍ الحفظ..." : "حفظ التحديث"}
                 </button>
+
+                {counselorRec.trim() && (
+                  <button
+                    onClick={async () => {
+                      const { error } = await supabase.from("counselor_solutions").insert({
+                        title: `حل لحالة: ${selectedReport.category}`,
+                        content: counselorRec,
+                        category: selectedReport.category,
+                        is_reusable: true,
+                        counselor_id: (await supabase.auth.getUser()).data.user?.id || "",
+                      });
+                      if (error) toast.error("خطأ في إضافة الحل");
+                      else toast.success("تمت إضافة الحل إلى قاعدة المعرفة الإرشادية ✅");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-success/10 text-success border border-success/20 text-btn font-bold hover:bg-success/20 transition-colors"
+                  >
+                    <BookOpen className="w-4 h-4" /> إضافة هذا الحل إلى قاعدة المعرفة
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
